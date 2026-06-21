@@ -1,0 +1,30 @@
+Build a fully interactive 2D ASCII Graphics Editor
+You are an expert front-end developer. Your task is to build a complete, fully working 2D ASCII graphics editor in a single self-contained HTML file using only vanilla HTML, CSS, and JavaScript — no frameworks, no external libraries, no build tools required.
+
+1. Canvas model and display
+The core data structure is a 2D array of characters representing the picture. Initialize every cell to a space character. The canvas dimensions — width (W columns) and height (H rows) — must be configurable by the user at runtime, with a maximum of 80 columns by 40 rows. Every time the state changes (an object is added, deleted, or modified), discard the old grid entirely and rebuild it from scratch by replaying all objects in order. Once the grid is built, join each row's characters into a string, join all rows with newline characters, and assign the result as the textContent of a <pre> element rendered in a monospace font. This is the only display mechanism — no canvas API, no SVG.
+
+2. Drawing functions
+Implement four pure drawing functions. Each function receives the grid array, a set of shape-specific parameters, and a fill character, and writes directly into the grid. Clamp all writes so coordinates outside the grid bounds are silently ignored.
+
+drawCircle(grid, cx, cy, r, char) — Loop from 0° to 359° in 1° steps. For each angle, compute x = round(cx + r × cos(θ)) and y = round(cy + r × 0.5 × sin(θ)). The 0.5 vertical scale corrects for the fact that character cells are taller than they are wide, producing a visually round circle instead of a tall ellipse.
+drawRectangle(grid, x, y, w, h, char) — Draw only the four border edges (hollow rectangle). Top edge: row y, columns x to x+w−1. Bottom edge: row y+h−1, same columns. Left edge: column x, rows y to y+h−1. Right edge: column x+w−1, same rows.
+drawLine(grid, x1, y1, x2, y2, char) — Use Bresenham's line algorithm to plot a straight line between two points. This handles horizontal, vertical, and diagonal lines cleanly without gaps.
+drawTriangle(grid, tipX, tipY, baseWidth, height, char) — Draw an isosceles triangle defined by a tip point and a base. Compute the two base corners as (tipX − floor(baseWidth/2), tipY + height − 1) and (tipX + baseWidth − 1 − floor(baseWidth/2), tipY + height − 1). Then call drawLine three times: left edge (tip to left base corner), right edge (tip to right base corner), and base (left corner to right corner).
+
+
+3. Object model
+Maintain a module-level array called objects. Each entry is a plain JavaScript object with four fields: id (auto-incrementing integer), shape (one of "circle", "rectangle", "line", "triangle"), params (a plain object holding the shape's named numeric parameters), and char (either "*" or "_"). The rendering pipeline iterates over this array in insertion order, calling each object's corresponding draw function on a freshly created grid, so objects added later are drawn on top of earlier ones.
+
+4. Add, delete, and modify operations
+
+Add — Read the current shape type, all parameter field values, and the selected fill character from the UI. Construct a new object with a fresh ID, push it onto the objects array, then trigger a full re-render.
+Delete — Each object in the object list has a delete button. Clicking it removes that object from the array by ID and triggers a full re-render.
+Modify — Clicking an object row in the list enters edit mode: load that object's shape type, params, and char back into the sidebar form fields. Change the Add button label to "Update" and show a Cancel button. When the user submits, find the object by ID in the array and overwrite its params and char in place, then exit edit mode and re-render. Cancel exits edit mode without saving.
+
+
+5. User interface layout and controls
+Use a two-column layout. The left sidebar (fixed ~220px wide) contains, from top to bottom: a shape selector with one button per shape (circle, rectangle, line, triangle) that highlights the active selection; a dynamic parameter fields section that shows only the relevant inputs for the selected shape; a fill character toggle between * and _; canvas size controls (width and height number inputs that immediately resize and re-render the canvas); and an Add/Update button plus a Cancel button that is hidden unless in edit mode.
+The right main area contains the canvas display (<pre> in a bordered container) and a "Clear all" button that empties the objects array. Below the canvas is the object list panel, showing all current objects as rows. Each row displays the shape name, object ID, and fill character. Clicking a row selects it for editing (highlighted). Each row has a small × delete button on the right.
+The parameter fields shown per shape are: Circle → Center X, Center Y, Radius; Rectangle → X, Y, Width, Height; Line → X1, Y1, X2, Y2; Triangle → Tip X, Tip Y, Base width, Height. All inputs are numeric. When the selected shape changes, replace the parameter fields entirely with the correct set for that shape, populated with sensible default values.
+Style the UI cleanly using CSS custom properties so it works in both light and dark mode without any hardcoded hex colors. Keep the design minimal and native-feeling.
